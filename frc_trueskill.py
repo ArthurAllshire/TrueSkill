@@ -5,12 +5,15 @@ from datetime import datetime, timedelta
 
 
 class FrcTrueSkill:
-    def __init__(self):
-        self.env = TrueSkill(draw_probability=0.02)
+    draw_deadband = 20
+
+    def __init__(self, offline=False):
+        self.env = TrueSkill(beta=4, draw_probability=0.2)
         self.trueskills = {}
         self.events = {}
         self.processed_matches = set()
-        self.get_previous_matches()
+        if not offline:
+            self.get_previous_matches()
 
     def init_teams(self, red_alliance, blue_alliance):
         for alliance in [red_alliance, blue_alliance]:
@@ -29,7 +32,7 @@ class FrcTrueSkill:
         if not corrected_scores:
             return None
 
-        if corrected_scores['red'] == corrected_scores['blue']:  # Tied
+        if abs(corrected_scores['red'] - corrected_scores['blue']) < FrcTrueSkill.draw_deadband:  # Tied
             if corrected_scores['red'] == -1:
                 return None # No result yet
             ranks = [0, 0]
@@ -93,22 +96,24 @@ class FrcTrueSkill:
         red = alliances['red']
         blue = alliances['blue']
 
+        adj_scores = {'red': red['score'], 'blue': blue['score']}
+
         score = match['score_breakdown']
         if score is None:
-            return {'red': red['score'], 'blue': blue['score']}
-            # return None
+            return adj_scores
+        # return None
 
         red_stats = score['red']
         blue_stats = score['blue']
 
         if red_stats["rotor3Engaged"]:
-            red['score'] += 100
+            adj_scores['red'] += 100
         if red_stats["kPaRankingPointAchieved"]:
-            red['score'] += 20
+            adj_scores['red'] += 20
 
         if blue_stats["rotor3Engaged"]:
-            blue['score'] += 100
+            adj_scores['blue'] += 100
         if blue_stats["kPaRankingPointAchieved"]:
-            blue['score'] += 20
+            adj_scores['blue'] += 20
 
-        return {'red': red['score'], 'blue': blue['score']}
+        return adj_scores
