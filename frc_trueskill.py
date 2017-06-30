@@ -19,7 +19,7 @@ class FrcTrueSkill:
     RED_WIN = (WON, LOST)
     BLUE_WIN = (LOST, WON)
 
-    def __init__(self):
+    def __init__(self, predict_previous=True):
         self.env = TrueSkill(draw_probability=0.02)
         self.trueskills = {}
         self.events = {}
@@ -29,7 +29,8 @@ class FrcTrueSkill:
         self.session = requests.Session()
         self.session.headers.update(self.HEADERS)
 
-        self.get_previous_matches()
+        if predict_previous:
+            self.get_previous_matches()
 
     def init_teams(self, red_alliance, blue_alliance):
         for team in red_alliance + blue_alliance:
